@@ -1,3 +1,31 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+
+html {
+    background-color: white !important;
+}
+
+
+.step-info::after {
+    color: white !important;
+}
+
+.steps-vertical .step:before {
+    width: 0.1rem;
+}
+
+.step-active::after, .step-inactive::after {
+    background-color: white !important;
+    border: 2px solid;
+}
+
+.step-active::after {
+    border-color: var(--fallback-in, oklch(var(--in) / var(--tw-bg-opacity)));
+    padding-bottom: 2px;
+    color: var(--fallback-in, oklch(var(--in) / var(--tw-bg-opacity))) !important;
+}
+
+.step-inactive::before {
+    background-color: var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity))) !important;
+}
