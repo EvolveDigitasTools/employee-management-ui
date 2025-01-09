@@ -32,7 +32,7 @@ interface WorkExperienceExtracted {
     endDate?: string,
 }
 
-interface WorkExperience {
+export interface WorkExperience {
     company: string,
     position: string,
     startDate: string,

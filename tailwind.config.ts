@@ -1,6 +1,7 @@
 import forms from '@tailwindcss/forms';
 import typography from '@tailwindcss/typography';
 import daisyui from 'daisyui';
+import tailwindscroller from 'tailwind-scrollbar';
 import type { Config } from 'tailwindcss';
 
 export default {
@@ -14,7 +15,7 @@ export default {
 		}
 	},
 
-	plugins: [typography, forms, daisyui],
+	plugins: [typography, forms, daisyui, tailwindscroller],
 	daisyui: {
 		themeRoot: ".daisy-ui"
 	}

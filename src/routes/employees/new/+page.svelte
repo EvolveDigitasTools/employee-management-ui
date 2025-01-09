@@ -2,7 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { getSizeInWords, isTokenVerified, onboardingLevels } from '../../../utils/utils';
-	import type { EmployeeDetails, EmployeeDetailsExtracted } from '../../../utils/interfaces';
+	import type {
+		EmployeeDetails,
+		EmployeeDetailsExtracted,
+		WorkExperience
+	} from '../../../utils/interfaces';
 	import { Home, Icon } from 'svelte-hero-icons';
 
 	// Local state for the form
@@ -45,7 +49,7 @@
 		}
 	});
 
-	const updateProgress = () => {
+	const updateProgress = (employeeDetails: EmployeeDetails) => {
 		if (activeLevel == 0) {
 			submitEnabled = !!employeeDetails.resumeDocument;
 		} else if (activeLevel == 1) {
@@ -57,6 +61,19 @@
 				!!employeeDetails.phone &&
 				employeeDetails.phone.length > 0 &&
 				!!employeeDetails.profileImg;
+		} else if (activeLevel == 2) {
+			submitEnabled = true;
+			employeeDetails.workExperiences.forEach((experience) => {
+				if (
+					!(experience.company && experience.company.length > 0) ||
+					!(experience.position && experience.position.length > 0) ||
+					!(experience.startDate && experience.startDate.length > 0) ||
+					!(experience.endDate && experience.endDate.length > 0) ||
+					!experience.experienceDocument
+				) {
+					submitEnabled = false;
+				}
+			});
 		} else {
 			submitEnabled = false;
 		}
@@ -64,7 +81,7 @@
 
 	const updateEmployeeDetails = (updatedEmployeeDetails: EmployeeDetails) => {
 		employeeDetails = updatedEmployeeDetails;
-		updateProgress();
+		updateProgress(employeeDetails);
 	};
 
 	// Resume submission and parsing
@@ -187,6 +204,8 @@
 				case 1:
 					result = true;
 					break;
+				case 2:
+					result = true;
 				default:
 					break;
 			}
@@ -194,7 +213,7 @@
 			if (result) {
 				onboardingLevelsStatus[activeLevel] = true;
 				activeLevel++;
-				updateProgress();
+				updateProgress(employeeDetails);
 			}
 		} catch (err) {
 			error = 'An error occurred while submitting the form.';
@@ -221,14 +240,40 @@
 		}
 	};
 
-	const addNewEmployee = async () => {
-		alert('new employee created successfully');
-		// 	try {
-		// 		if()
-		// 	} catch (err) {
-		// 		console.error(err);
-		// 		alert("Employee creation failed. Please try again or contact admin")
-		// 	}
+	const addNewExperience = () => {
+		let newExperience = {
+			company: '',
+			position: '',
+			startDate: '',
+			endDate: '',
+			experienceDocument: null
+		};
+		employeeDetails = {
+			...employeeDetails,
+			workExperiences: [...employeeDetails.workExperiences, newExperience]
+		};
+	};
+
+	const updateExperience = (index: number, field: keyof WorkExperience, value: any) => {
+		employeeDetails = {
+			...employeeDetails,
+			workExperiences: employeeDetails.workExperiences.map((experience, i) => {
+				if (i === index) {
+					return {
+						...experience,
+						[field]: value
+					};
+				}
+				return experience;
+			})
+		};
+	};
+
+	const handleDelete = (index: number) => {
+		employeeDetails = {
+			...employeeDetails,
+			workExperiences: employeeDetails.workExperiences.filter((_, i) => i !== index)
+		};
 	};
 
 	const handleFileChange = (event: Event) => {
@@ -237,7 +282,7 @@
 
 		if (file) {
 			employeeDetails.profileImg = file;
-			updateProgress();
+			updateProgress(employeeDetails);
 			const reader = new FileReader();
 			reader.onload = () => {
 				profileImgURL = reader.result as string; // Store the data URL
@@ -246,7 +291,7 @@
 		}
 	};
 
-	$: updateProgress();
+	$: updateProgress(employeeDetails);
 </script>
 
 <header class="flex h-[12%] justify-start border-b-2 bg-white">
@@ -275,8 +320,8 @@
 			{/each}
 		</ul>
 	</div>
-	<div class="col-span-2 h-full rounded-xl border-2 border-solid bg-white p-8">
-		<div class="h-[90%]">
+	<div class="col-span-2 h-full overflow-hidden rounded-xl border-2 border-solid bg-white py-8">
+		<div class="custom-scrollbar h-[90%] overflow-y-scroll px-8">
 			{#if activeLevel == 0}
 				<label for="resume" class="mb-4 block text-lg font-medium text-gray-900">Add Resume</label>
 				<div id="resume" class="rounded-lg border border-dashed border-gray-900/25 bg-gray-50">
@@ -404,7 +449,7 @@
 								placeholder="Enter your name"
 								class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 								bind:value={employeeDetails.name}
-								on:change={updateProgress}
+								on:change={() => updateProgress(employeeDetails)}
 							/>
 						</div>
 					</div>
@@ -421,11 +466,11 @@
 								placeholder="you@example.com"
 								class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 								bind:value={employeeDetails.email}
-								on:change={updateProgress}
+								on:change={() => updateProgress(employeeDetails)}
 							/>
 						</div>
 					</div>
-					
+
 					<div>
 						<label for="phone-number" class="block text-sm/6 font-medium text-gray-900"
 							>Phone Number</label
@@ -439,90 +484,151 @@
 								placeholder="you@example.com"
 								class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 								bind:value={employeeDetails.phone}
-								on:change={updateProgress}
+								on:change={() => updateProgress(employeeDetails)}
 							/>
 						</div>
 					</div>
 				</div>
 			{/if}
+			{#if activeLevel == 2}
+				<ul role="list" class="divide-y">
+					{#each employeeDetails.workExperiences as experience, index}
+						<div
+							class="my-3 rounded-lg border-2 border-solid border-gray-400 bg-white p-4 shadow-md"
+						>
+							<button
+								class="border-grey-800 relative -right-7 -top-7 float-right rounded-full border bg-white p-1 text-red-500 hover:bg-red-500 hover:text-white"
+								on:click={() => handleDelete(index)}
+								aria-label="Delete Experience"
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-4 w-4"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</button>
+							<div class="grid grid-cols-2 gap-4">
+								<div>
+									<input
+										type="text"
+										class="w-full rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+										value={experience.company}
+										on:input={(e: Event) =>
+											updateExperience(index, 'company', (e.target as HTMLInputElement).value)}
+										placeholder="Enter company name"
+									/>
+								</div>
+								<div>
+									<input
+										type="text"
+										class="w-full rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+										value={experience.position}
+										on:input={(e: Event) =>
+											updateExperience(index, 'position', (e.target as HTMLInputElement).value)}
+										placeholder="Enter position"
+									/>
+								</div>
+								<div class="grid grid-cols-2 gap-4">
+									<div>
+										<label for="start-date" class="block text-sm font-medium text-gray-700"
+											>Start Date</label
+										>
+										<input
+											id="start-date"
+											type="month"
+											class="w-full rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+											value={experience.startDate}
+											on:input={(e: Event) =>
+												updateExperience(index, 'startDate', (e.target as HTMLInputElement).value)}
+										/>
+									</div>
+									<div>
+										<label for="end-date" class="block text-sm font-medium text-gray-700"
+											>End Date</label
+										>
+										<input
+											id="end-date"
+											type="month"
+											class="w-full rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+											value={experience.endDate}
+											on:input={(e: Event) =>
+												updateExperience(index, 'endDate', (e.target as HTMLInputElement).value)}
+										/>
+									</div>
+								</div>
+								<div>
+									<label for="experience-document" class="block text-sm font-medium text-gray-700">
+										Experience Document
+									</label>
+									<div class="relative flex">
+										<input
+											id="experience-document"
+											type="file"
+											class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+											on:change={(e: Event) =>
+												updateExperience(
+													index,
+													'experienceDocument',
+													(e.target as HTMLInputElement).files?.[0] || null
+												)}
+										/>
+										<label
+											for="experience-document"
+											class="block w-fit cursor-pointer rounded border border-gray-400 bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+										>
+											Choose File
+										</label>
+										<span class="my-auto ml-2 text-sm text-gray-600">
+											{experience.experienceDocument?.name ?? 'No file chosen'}
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					{/each}
+				</ul>
+				<button
+					class="mx-auto flex items-center gap-2 rounded border border-gray-400 px-2 py-1"
+					on:click={addNewExperience}
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M12 4v16m8-8H4"
+						/>
+					</svg>
+					Add New Experience
+				</button>
+			{/if}
 		</div>
-		<div class="flex h-[10%] items-end justify-end gap-x-6 border-t">
+		<div class="flex h-[10%] items-end justify-end gap-x-6 border-t px-8">
 			<button
 				type="submit"
 				disabled={submitEnabled ? false : true}
 				class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-500"
 				on:click={submitSteps}>Submit{submitEnabled ? '' : ' (enter all details)'}</button
 			>
-
 		</div>
 	</div>
-
-	<!-- {#if !resumeSubmitted}
-		<div class="mx-auto max-w-lg rounded-md border-2 border-gray-300 p-4 shadow-md">
-			<h2 class="mb-4 text-center text-2xl font-bold">Upload Your Resume</h2>
-			<form class="space-y-4">
-				<div>
-					<label for="resume" class="block text-sm font-medium text-gray-700"
-						>Choose a file (.pdf, .docx accepted)</label
-					>
-					<input
-						id="resume"
-						type="file"
-						accept=".pdf,.docx"
-						class="mt-2 w-full rounded border p-2"
-						on:change={(e: Event) =>
-							(employeeDetails.resumeDocument = (e.target as HTMLInputElement).files?.[0] || null)}
-					/>
-				</div>
-				<div class="text-center">
-					<button
-						type="submit"
-						class="rounded-md bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-600"
-						on:click={submitResume}>Upload Resume</button
-					>
-				</div>
-			</form>
-			{#if error}
-				<p class="mt-2 text-red-500">{error}</p>
-			{/if}
-		</div>
-	{/if} -->
-
-	<!-- Employee Details Form -->
 	{#if false}
 		<form on:submit|preventDefault={submitForm} class="space-y-4">
-			<div>
-				<label for="name" class="block font-bold">Name:</label>
-				<input
-					id="name"
-					type="text"
-					required
-					bind:value={employeeDetails.name}
-					class="w-full rounded-md border border-gray-300 p-2"
-				/>
-			</div>
-
-			<div>
-				<label for="email" class="block font-bold">Email:</label>
-				<input
-					id="email"
-					type="email"
-					required
-					bind:value={employeeDetails.email}
-					class="w-full rounded-md border border-gray-300 p-2"
-				/>
-			</div>
-
-			<div>
-				<label for="phone" class="block font-bold">Phone:</label>
-				<input
-					id="phone"
-					type="tel"
-					required
-					bind:value={employeeDetails.phone}
-					class="w-full rounded-md border border-gray-300 p-2"
-				/>
-			</div>
 
 			<div>
 				<label for="skills" class="mb-2 block font-bold">Skills:</label>
@@ -561,76 +667,6 @@
 						Add
 					</button>
 				</div>
-			</div>
-
-			<div>
-				<label for="work-experiences" class="block font-bold">Work Experience:</label>
-				{#each employeeDetails.workExperiences as work, index}
-					<div class="mb-2">
-						<input
-							type="text"
-							placeholder="Company Name"
-							required
-							bind:value={work.company}
-							class="w-full rounded-md border border-gray-300 p-2"
-						/>
-						<input
-							type="text"
-							placeholder="Position"
-							required
-							bind:value={work.position}
-							class="mt-2 w-full rounded-md border border-gray-300 p-2"
-						/>
-						<input
-							type="month"
-							placeholder="Start Date"
-							required
-							bind:value={work.startDate}
-							class="mt-2 w-full rounded-md border border-gray-300 p-2"
-						/>
-						<input
-							type="month"
-							placeholder="End Date"
-							required
-							bind:value={work.endDate}
-							class="mt-2 w-full rounded-md border border-gray-300 p-2"
-						/>
-						<input
-							type="file"
-							placeholder="Enter Experience Document like Relieving Letter"
-							required
-							bind:value={work.experienceDocument}
-							class="mt-2 w-full rounded-md border border-gray-300 p-2"
-						/>
-						<button
-							type="button"
-							on:click={() => employeeDetails.workExperiences.splice(index, 1)}
-							class="mt-2 text-red-500 hover:underline"
-						>
-							Remove
-						</button>
-					</div>
-				{/each}
-				<button
-					type="button"
-					id="work-experiences"
-					on:click={() => {
-						// Add a new work experience object to the array
-						employeeDetails.workExperiences = [
-							...employeeDetails.workExperiences,
-							{
-								company: '',
-								position: '',
-								startDate: '',
-								endDate: '',
-								experienceDocument: null
-							}
-						];
-					}}
-					class="mt-2 rounded-md bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600"
-				>
-					Add Work Experience
-				</button>
 			</div>
 
 			<div>
@@ -802,15 +838,6 @@
 					class="w-full rounded-md border border-gray-300 p-2"
 				/>
 			</div>
-
-			<!-- Submit Button -->
-			<button
-				type="submit"
-				class="rounded-md bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-600"
-				on:click={addNewEmployee}
-			>
-				Submit
-			</button>
 		</form>
 	{/if}
 </div>
