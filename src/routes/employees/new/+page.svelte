@@ -2,15 +2,13 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { isTokenVerified, onboardingLevels } from '../../../utils/utils';
-	import type {
-		EmployeeDetails,
-		EmployeeDetailsExtracted
-	} from '../../../utils/interfaces';
+	import type { EmployeeDetails, EmployeeDetailsExtracted } from '../../../utils/interfaces';
 	import { Home, Icon } from 'svelte-hero-icons';
 	import UploadResume from '../../../components/UploadResume.svelte';
 	import AddEmployeeDetails from '../../../components/AddEmployeeDetails.svelte';
 	import AddWorkExperience from '../../../components/AddWorkExperience.svelte';
 	import AddEducation from '../../../components/AddEducation.svelte';
+	import AddSkillsAchievements from '../../../components/AddSkillsAchievements.svelte';
 
 	// Local state for the form
 	let token: string;
@@ -31,8 +29,6 @@
 		profileImg: null
 	};
 	let error = '';
-	let newSkill = '';
-	let newAchievement = '';
 	let submitEnabled: boolean = false;
 	let onboardingLevelsStatus = onboardingLevels.map(() => false);
 	let activeLevel = 0;
@@ -88,7 +84,8 @@
 					submitEnabled = false;
 				}
 			});
-		} else {
+		} else if (activeLevel == 4) submitEnabled = true;
+		else {
 			submitEnabled = false;
 		}
 	};
@@ -177,6 +174,9 @@
 				case 3:
 					result = true;
 					break;
+				case 4:
+					result = true;
+					break;
 				default:
 					break;
 			}
@@ -243,20 +243,45 @@
 	<div class="col-span-2 h-full overflow-hidden rounded-xl border-2 border-solid bg-white py-8">
 		<div class="custom-scrollbar h-[90%] overflow-y-scroll px-8">
 			{#if activeLevel == 0}
-				<UploadResume uploadResume={(file: File) =>
-					updateEmployeeDetails({
-						...employeeDetails,
-						resumeDocument: file
-					})} resumeDocument={employeeDetails.resumeDocument} />
+				<UploadResume
+					uploadResume={(file: File) =>
+						updateEmployeeDetails({
+							...employeeDetails,
+							resumeDocument: file
+						})}
+					resumeDocument={employeeDetails.resumeDocument}
+				/>
 			{/if}
 			{#if activeLevel == 1}
-				<AddEmployeeDetails updateEmployeeDetail={updateEmployeeDetail} name={employeeDetails.name} email={employeeDetails.email} phone={employeeDetails.phone} />
+				<AddEmployeeDetails
+					{updateEmployeeDetail}
+					name={employeeDetails.name}
+					email={employeeDetails.email}
+					phone={employeeDetails.phone}
+				/>
 			{/if}
 			{#if activeLevel == 2}
-				<AddWorkExperience workExperiences = {employeeDetails.workExperiences} updateWorkExperiences={(updatedWorkExperiences) => updateEmployeeDetails({...employeeDetails, workExperiences: updatedWorkExperiences})} />
+				<AddWorkExperience
+					workExperiences={employeeDetails.workExperiences}
+					updateWorkExperiences={(updatedWorkExperiences) =>
+						updateEmployeeDetails({ ...employeeDetails, workExperiences: updatedWorkExperiences })}
+				/>
 			{/if}
 			{#if activeLevel == 3}
-				<AddEducation educationDetails = {employeeDetails.education} updateEducationDetails={(updatedEducationDetails) => updateEmployeeDetails({...employeeDetails, education: updatedEducationDetails})} />
+				<AddEducation
+					educationDetails={employeeDetails.education}
+					updateEducationDetails={(updatedEducationDetails) =>
+						updateEmployeeDetails({ ...employeeDetails, education: updatedEducationDetails })}
+				/>
+			{/if}
+			{#if activeLevel == 4}
+				<AddSkillsAchievements
+					skills={employeeDetails.skills}
+					achievements={employeeDetails.achievements}
+					updateSkills={(updatedSkills) => updateEmployeeDetail('skills', updatedSkills)}
+					updateAchievements={(updatedAchievements) =>
+						updateEmployeeDetail('achievements', updatedAchievements)}
+				/>
 			{/if}
 		</div>
 		<div class="flex h-[10%] items-end justify-end gap-x-6 border-t px-8">
@@ -270,87 +295,6 @@
 	</div>
 	{#if false}
 		<form on:submit|preventDefault={submitForm} class="space-y-4">
-
-			<div>
-				<label for="skills" class="mb-2 block font-bold">Skills:</label>
-				<div id="skills" class="mb-4 flex flex-wrap gap-2">
-					{#each employeeDetails.skills as skill}
-						<div class="flex items-center rounded-md bg-blue-500 px-3 py-1 text-white">
-							<span class="mr-2">{skill}</span>
-							<button
-								type="button"
-								class="text-red-300 hover:text-red-500 focus:outline-none"
-								on:click={() => {
-									employeeDetails.skills = employeeDetails.skills.filter((s) => s !== skill);
-								}}
-							>
-								x
-							</button>
-						</div>
-					{/each}
-				</div>
-				<div class="flex items-center gap-2">
-					<input
-						type="text"
-						placeholder="Add a skill"
-						class="w-full rounded-md border border-gray-300 p-2"
-						bind:value={newSkill}
-					/>
-					<button
-						type="button"
-						class="rounded-md bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600"
-						on:click={() => {
-							if (newSkill.length > 0)
-								employeeDetails.skills = [...employeeDetails.skills, newSkill];
-							newSkill = '';
-						}}
-					>
-						Add
-					</button>
-				</div>
-			</div>
-
-			<div>
-				<label for="achievements" class="mb-2 block font-bold">Achievements:</label>
-				<div id="achievements" class="mb-4 flex flex-wrap gap-2">
-					{#each employeeDetails.achievements as achievement}
-						<div class="flex items-center rounded-md bg-blue-500 px-3 py-1 text-white">
-							<span class="mr-2">{achievement}</span>
-							<button
-								type="button"
-								class="text-red-300 hover:text-red-500 focus:outline-none"
-								on:click={() => {
-									employeeDetails.achievements = employeeDetails.achievements.filter(
-										(s) => s !== achievement
-									);
-								}}
-							>
-								x
-							</button>
-						</div>
-					{/each}
-				</div>
-				<div class="flex items-center gap-2">
-					<input
-						type="text"
-						placeholder="Add a Achievement"
-						class="w-full rounded-md border border-gray-300 p-2"
-						bind:value={newAchievement}
-					/>
-					<button
-						type="button"
-						class="rounded-md bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600"
-						on:click={() => {
-							if (newAchievement.length > 0)
-								employeeDetails.achievements = [...employeeDetails.achievements, newAchievement];
-							newAchievement = '';
-						}}
-					>
-						Add
-					</button>
-				</div>
-			</div>
-
 			<div>
 				<label for="aadhar" class="block font-bold">Aadhar Card:</label>
 				<input
