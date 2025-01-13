@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { getSizeInWords, isTokenVerified, onboardingLevels } from '../../../utils/utils';
+	import { isTokenVerified, onboardingLevels } from '../../../utils/utils';
 	import type {
 		EmployeeDetails,
 		EmployeeDetailsExtracted,
 		WorkExperience
 	} from '../../../utils/interfaces';
 	import { Home, Icon } from 'svelte-hero-icons';
+	import UploadResume from '../../../components/UploadResume.svelte';
 
 	// Local state for the form
 	let token: string;
@@ -241,7 +242,7 @@
 	};
 
 	const addNewExperience = () => {
-		let newExperience = {
+		let newExperience: WorkExperience = {
 			company: '',
 			position: '',
 			startDate: '',
@@ -269,14 +270,14 @@
 		};
 	};
 
-	const handleDelete = (index: number) => {
+	const deleteExperience = (index: number) => {
 		employeeDetails = {
 			...employeeDetails,
 			workExperiences: employeeDetails.workExperiences.filter((_, i) => i !== index)
 		};
 	};
 
-	const handleFileChange = (event: Event) => {
+	const updateExperienceDocument = (event: Event) => {
 		const target = event.target as HTMLInputElement;
 		const file = target.files?.[0];
 
@@ -323,78 +324,11 @@
 	<div class="col-span-2 h-full overflow-hidden rounded-xl border-2 border-solid bg-white py-8">
 		<div class="custom-scrollbar h-[90%] overflow-y-scroll px-8">
 			{#if activeLevel == 0}
-				<label for="resume" class="mb-4 block text-lg font-medium text-gray-900">Add Resume</label>
-				<div id="resume" class="rounded-lg border border-dashed border-gray-900/25 bg-gray-50">
-					<div class="mt-2 flex justify-center px-6 py-10">
-						<div class="text-center">
-							<svg
-								class="mx-auto size-12 text-gray-400"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								viewBox="0 0 24 24"
-								xmlns="http://www.w3.org/2000/svg"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									d="M3 16v4a2 2 0 002 2h14a2 2 0 002-2v-4m-4-4L12 3m0 0L7 12m5-9v12"
-								></path>
-							</svg>
-							<div class="mt-4 flex justify-center text-sm/6 text-gray-600">
-								<label
-									for="file-upload"
-									class="relative cursor-pointer rounded-md font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
-								>
-									<span>Upload a file</span>
-									<input
-										id="file-upload"
-										name="file-upload"
-										accept=".pdf,.docx"
-										type="file"
-										class="sr-only"
-										on:change={(e: Event) =>
-											updateEmployeeDetails({
-												...employeeDetails,
-												resumeDocument: (e.target as HTMLInputElement).files?.[0] || null
-											})}
-									/>
-								</label>
-							</div>
-							<p class="text-xs/5 text-gray-600">PDF, DOCX up to 2MB</p>
-						</div>
-					</div>
-					{#if employeeDetails.resumeDocument}
-						<div
-							class="flex items-center justify-between rounded-b-lg bg-white py-4 pl-4 pr-5 text-sm/6"
-						>
-							<div class="flex w-0 flex-1 items-center">
-								<svg
-									class="size-5 shrink-0 text-gray-400"
-									viewBox="0 0 20 20"
-									fill="currentColor"
-									aria-hidden="true"
-									data-slot="icon"
-								>
-									<path
-										fill-rule="evenodd"
-										d="M15.621 4.379a3 3 0 0 0-4.242 0l-7 7a3 3 0 0 0 4.241 4.243h.001l.497-.5a.75.75 0 0 1 1.064 1.057l-.498.501-.002.002a4.5 4.5 0 0 1-6.364-6.364l7-7a4.5 4.5 0 0 1 6.368 6.36l-3.455 3.553A2.625 2.625 0 1 1 9.52 9.52l3.45-3.451a.75.75 0 1 1 1.061 1.06l-3.45 3.451a1.125 1.125 0 0 0 1.587 1.595l3.454-3.553a3 3 0 0 0 0-4.242Z"
-										clip-rule="evenodd"
-									/>
-								</svg>
-								<div class="ml-4 flex min-w-0 flex-1 gap-2">
-									<span class="truncate font-medium">{employeeDetails.resumeDocument.name}</span>
-									<span class="shrink-0 text-gray-400"
-										>{getSizeInWords(employeeDetails.resumeDocument.size)}</span
-									>
-								</div>
-							</div>
-						</div>
-					{/if}
-				</div>
-				{#if error}
-					<p class="mt-2 text-red-500">{error}</p>
-				{/if}
+				<UploadResume uploadResume={(file: File) =>
+					updateEmployeeDetails({
+						...employeeDetails,
+						resumeDocument: file
+					})} resumeDocument={employeeDetails.resumeDocument} />
 			{/if}
 			{#if activeLevel == 1}
 				<div class="flex flex-col justify-start gap-4">
@@ -428,7 +362,7 @@
 								type="file"
 								accept="image/*"
 								bind:this={fileInput}
-								on:change={handleFileChange}
+								on:change={updateExperienceDocument}
 								style="display: none"
 							/>
 							<button
@@ -498,7 +432,7 @@
 						>
 							<button
 								class="border-grey-800 relative -right-7 -top-7 float-right rounded-full border bg-white p-1 text-red-500 hover:bg-red-500 hover:text-white"
-								on:click={() => handleDelete(index)}
+								on:click={() => deleteExperience(index)}
 								aria-label="Delete Experience"
 							>
 								<svg
