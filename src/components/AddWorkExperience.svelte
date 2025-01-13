@@ -33,7 +33,7 @@
 		updateWorkExperiences([...workExperiences, newExperience]);
 	};
 </script>
-
+<h2 class="my-1 block font-bold text-xl">Work Experiences</h2>
 <ul role="list" class="divide-y">
 	{#each workExperiences as experience, index}
 		<div class="my-3 rounded-lg border-2 border-solid border-gray-400 bg-white p-4 shadow-md">

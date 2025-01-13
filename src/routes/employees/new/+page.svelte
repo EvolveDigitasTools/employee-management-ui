@@ -48,7 +48,7 @@
 		}
 	});
 
-	const updateProgress = (employeeDetails: EmployeeDetails) => {
+	const updateProgress = (employeeDetails: EmployeeDetails, activeLevel: number) => {
 		if (activeLevel == 0) {
 			submitEnabled = !!employeeDetails.resumeDocument;
 		} else if (activeLevel == 1) {
@@ -110,7 +110,6 @@
 
 	const updateEmployeeDetails = (updatedEmployeeDetails: EmployeeDetails) => {
 		employeeDetails = updatedEmployeeDetails;
-		updateProgress(employeeDetails);
 	};
 
 	const updateEmployeeDetail = (key: string, value: any) => {
@@ -228,7 +227,7 @@
 		}
 	};
 
-	$: updateProgress(employeeDetails);
+	$: updateProgress(employeeDetails, activeLevel);
 </script>
 
 <header class="flex h-[12%] justify-start border-b-2 bg-white">
