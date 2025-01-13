@@ -10,6 +10,7 @@
 	import UploadResume from '../../../components/UploadResume.svelte';
 	import AddEmployeeDetails from '../../../components/AddEmployeeDetails.svelte';
 	import AddWorkExperience from '../../../components/AddWorkExperience.svelte';
+	import AddEducation from '../../../components/AddEducation.svelte';
 
 	// Local state for the form
 	let token: string;
@@ -74,6 +75,19 @@
 					submitEnabled = false;
 				}
 			});
+		} else if (activeLevel == 3) {
+			submitEnabled = true;
+			employeeDetails.education.forEach((education) => {
+				if (
+					!(education.level && education.level.length > 0) ||
+					!(education.institution && education.institution.length > 0) ||
+					!(education.startYear && education.startYear > 1990) ||
+					!(education.grade && education.grade.length > 0) ||
+					!education.educationDocument
+				) {
+					submitEnabled = false;
+				}
+			});
 		} else {
 			submitEnabled = false;
 		}
@@ -134,68 +148,14 @@
 							level: education.level ?? '',
 							institution: education.institution ?? '',
 							startYear: education.startYear ?? 0,
-							grade: education.grade ?? ''
+							grade: education.grade ?? '',
+							educationDocument: null
 						};
 					}) || []
 			};
 			return true;
 		} catch (err) {
 			error = 'Failed to parse the resume. Please fill the details manually.';
-			// const testData: EmployeeDetails = {
-			// 	name: 'Jatin Aggarwal',
-			// 	email: 'jatin.aggarwal@gmail.com',
-			// 	phone: {
-			// 		prefix: '91',
-			// 		number: '9999999999'
-			// 	},
-			// 	skills: ['Python', 'JavaScript'],
-			// 	workExperiences: [
-			// 		{
-			// 			company: 'ABC Company',
-			// 			position: 'Software Engineer',
-			// 			startDate: {
-			// 				month: 7,
-			// 				year: 2021
-			// 			},
-			// 			endDate: {
-			// 				month: 12,
-			// 				year: 2022
-			// 			},
-			// 			experienceDocument: null
-			// 		}
-			// 	],
-			// 	education: [
-			// 		{
-			// 			level: 'Class X',
-			// 			institution: 'ABC School',
-			// 			startYear: 2014,
-			// 			grade: '8.2 CGPA'
-			// 		},
-			// 		{
-			// 			level: 'Class XII',
-			// 			institution: 'ABC School',
-			// 			startYear: 2016,
-			// 			grade: '76.8%',
-			// 			specialization: 'Science'
-			// 		},
-			// 		{
-			// 			level: 'B.Tech',
-			// 			institution: 'ABC University',
-			// 			startYear: 2017,
-			// 			endYear: 2021,
-			// 			grade: '6.8 SGPA',
-			// 			specialization: 'Computer Science'
-			// 		}
-			// 	],
-			// 	achievements: ['Certificate of Completion of Java course'],
-			// 	aadharDocument: null,
-			// 	panDocument: null
-			// };
-			// employeeDetails = {
-			// 	...employeeDetails,
-			// 	...testData
-			// };
-			// resumeSubmitted = true;
 			console.error(err);
 			return false;
 		}
@@ -213,6 +173,10 @@
 					break;
 				case 2:
 					result = true;
+					break;
+				case 3:
+					result = true;
+					break;
 				default:
 					break;
 			}
@@ -291,6 +255,9 @@
 			{#if activeLevel == 2}
 				<AddWorkExperience workExperiences = {employeeDetails.workExperiences} updateWorkExperiences={(updatedWorkExperiences) => updateEmployeeDetails({...employeeDetails, workExperiences: updatedWorkExperiences})} />
 			{/if}
+			{#if activeLevel == 3}
+				<AddEducation educationDetails = {employeeDetails.education} updateEducationDetails={(updatedEducationDetails) => updateEmployeeDetails({...employeeDetails, education: updatedEducationDetails})} />
+			{/if}
 		</div>
 		<div class="flex h-[10%] items-end justify-end gap-x-6 border-t px-8">
 			<button
@@ -341,80 +308,6 @@
 						Add
 					</button>
 				</div>
-			</div>
-
-			<div>
-				<label for="education" class="block font-bold">Education:</label>
-				{#each employeeDetails.education as education, index}
-					<div class="mb-2">
-						<div>
-							<label for="level" class="block font-bold">Level:</label>
-							<input
-								type="text"
-								required
-								placeholder="Class X, XII or Under Grad or Post Grad"
-								bind:value={education.level}
-								class="w-full rounded-md border border-gray-300 p-2"
-							/>
-						</div>
-						<div>
-							<label for="institution" class="block font-bold">institution:</label>
-							<input
-								type="text"
-								placeholder="Add Institution"
-								required
-								bind:value={education.institution}
-								class="mt-2 w-full rounded-md border border-gray-300 p-2"
-							/>
-						</div>
-						<div>
-							<label for="start-year" class="block font-bold">Start Year:</label>
-							<input
-								type="number"
-								placeholder="Enter Education Start Year"
-								required
-								bind:value={education.startYear}
-								class="mt-2 w-full rounded-md border border-gray-300 p-2"
-							/>
-						</div>
-						<div>
-							<label for="institution" class="block font-bold">End Year:</label>
-							<input
-								type="number"
-								placeholder="Enter Education End Year(if applicable)"
-								bind:value={education.institution}
-								class="mt-2 w-full rounded-md border border-gray-300 p-2"
-							/>
-						</div>
-						<button
-							id="education"
-							type="button"
-							on:click={() => employeeDetails.education.splice(index, 1)}
-							class="mt-2 text-red-500 hover:underline"
-						>
-							Remove
-						</button>
-					</div>
-				{/each}
-				<button
-					type="button"
-					on:click={() => {
-						// Add a new work experience object to the array
-						employeeDetails.education = [
-							...employeeDetails.education,
-							{
-								level: '',
-								institution: '',
-								startYear: 2020,
-								grade: '',
-								specialization: ''
-							}
-						];
-					}}
-					class="mt-2 rounded-md bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600"
-				>
-					Add Education
-				</button>
 			</div>
 
 			<div>

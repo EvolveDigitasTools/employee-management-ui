@@ -49,11 +49,12 @@ interface EducationExtracted {
     specialization?: string; 
 }
 
-interface Education {
+export interface Education {
     level: string;
     institution: string;
     startYear: number;
     endYear?: number;
     grade: string;
     specialization?: string;
+    educationDocument: File | null
 }
