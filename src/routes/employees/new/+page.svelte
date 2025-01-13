@@ -9,6 +9,7 @@
 	import AddWorkExperience from '../../../components/AddWorkExperience.svelte';
 	import AddEducation from '../../../components/AddEducation.svelte';
 	import AddSkillsAchievements from '../../../components/AddSkillsAchievements.svelte';
+	import IdentityDocuments from '../../../components/IdentityDocuments.svelte';
 
 	// Local state for the form
 	let token: string;
@@ -85,7 +86,11 @@
 				}
 			});
 		} else if (activeLevel == 4) submitEnabled = true;
-		else {
+		else if (activeLevel == 5) {
+			if (employeeDetails.aadharDocument && employeeDetails.panDocument) {
+				submitEnabled = true;
+			} else submitEnabled = false;
+		} else {
 			submitEnabled = false;
 		}
 	};
@@ -166,15 +171,10 @@
 					result = await submitResume();
 					break;
 				case 1:
-					result = true;
-					break;
 				case 2:
-					result = true;
-					break;
 				case 3:
-					result = true;
-					break;
 				case 4:
+				case 5:
 					result = true;
 					break;
 				default:
@@ -282,6 +282,9 @@
 					updateAchievements={(updatedAchievements) =>
 						updateEmployeeDetail('achievements', updatedAchievements)}
 				/>
+			{/if}
+			{#if activeLevel == 5}
+				<IdentityDocuments documents={{ aadharDocument: employeeDetails.aadharDocument, panDocument: employeeDetails.panDocument}} updateDocument={updateEmployeeDetail} />
 			{/if}
 		</div>
 		<div class="flex h-[10%] items-end justify-end gap-x-6 border-t px-8">
