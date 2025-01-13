@@ -10,6 +10,7 @@
 	import AddEducation from '../../../components/AddEducation.svelte';
 	import AddSkillsAchievements from '../../../components/AddSkillsAchievements.svelte';
 	import IdentityDocuments from '../../../components/IdentityDocuments.svelte';
+	import JoiningDetails from '../../../components/JoiningDetails.svelte';
 
 	// Local state for the form
 	let token: string;
@@ -90,6 +91,18 @@
 			if (employeeDetails.aadharDocument && employeeDetails.panDocument) {
 				submitEnabled = true;
 			} else submitEnabled = false;
+		} else if (activeLevel == 6) {
+			if (
+				employeeDetails.department &&
+				employeeDetails.department.length > 0 &&
+				employeeDetails.position &&
+				employeeDetails.position.length > 0 &&
+				employeeDetails.dateJoined
+			) {
+				submitEnabled = true;
+			} else {
+				submitEnabled = false;
+			}
 		} else {
 			submitEnabled = false;
 		}
@@ -175,6 +188,7 @@
 				case 3:
 				case 4:
 				case 5:
+				case 6:
 					result = true;
 					break;
 				default:
@@ -183,8 +197,11 @@
 
 			if (result) {
 				onboardingLevelsStatus[activeLevel] = true;
+				if(activeLevel == 6) {
+					submitForm();
+					return;
+				}
 				activeLevel++;
-				updateProgress(employeeDetails);
 			}
 		} catch (err) {
 			error = 'An error occurred while submitting the form.';
@@ -284,7 +301,21 @@
 				/>
 			{/if}
 			{#if activeLevel == 5}
-				<IdentityDocuments documents={{ aadharDocument: employeeDetails.aadharDocument, panDocument: employeeDetails.panDocument}} updateDocument={updateEmployeeDetail} />
+				<IdentityDocuments
+					documents={{
+						aadharDocument: employeeDetails.aadharDocument,
+						panDocument: employeeDetails.panDocument
+					}}
+					updateDocument={updateEmployeeDetail}
+				/>
+			{/if}
+			{#if activeLevel == 6}
+				<JoiningDetails
+					department={employeeDetails.department}
+					position={employeeDetails.position}
+					dateJoined={employeeDetails.dateJoined}
+					updateField={updateEmployeeDetail}
+				/>
 			{/if}
 		</div>
 		<div class="flex h-[10%] items-end justify-end gap-x-6 border-t px-8">
@@ -296,62 +327,4 @@
 			>
 		</div>
 	</div>
-	{#if false}
-		<form on:submit|preventDefault={submitForm} class="space-y-4">
-			<div>
-				<label for="aadhar" class="block font-bold">Aadhar Card:</label>
-				<input
-					id="aadhar"
-					type="file"
-					required
-					bind:value={employeeDetails.aadharDocument}
-					class="w-full rounded-md border border-gray-300 p-2"
-				/>
-			</div>
-
-			<div>
-				<label for="pan" class="block font-bold">Pan Card:</label>
-				<input
-					id="pan"
-					type="file"
-					required
-					bind:value={employeeDetails.panDocument}
-					class="w-full rounded-md border border-gray-300 p-2"
-				/>
-			</div>
-
-			<div>
-				<label for="department" class="block font-bold">Department:</label>
-				<input
-					id="department"
-					type="text"
-					required
-					bind:value={employeeDetails.department}
-					class="w-full rounded-md border border-gray-300 p-2"
-				/>
-			</div>
-
-			<div>
-				<label for="position" class="block font-bold">Position:</label>
-				<input
-					id="position"
-					type="text"
-					required
-					bind:value={employeeDetails.position}
-					class="w-full rounded-md border border-gray-300 p-2"
-				/>
-			</div>
-
-			<div>
-				<label for="date-joined" class="block font-bold">Joining Date:</label>
-				<input
-					id="date-joined"
-					type="date"
-					required
-					bind:value={employeeDetails.dateJoined}
-					class="w-full rounded-md border border-gray-300 p-2"
-				/>
-			</div>
-		</form>
-	{/if}
 </div>
