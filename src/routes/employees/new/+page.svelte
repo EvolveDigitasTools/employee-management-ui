@@ -4,11 +4,12 @@
 	import { isTokenVerified, onboardingLevels } from '../../../utils/utils';
 	import type {
 		EmployeeDetails,
-		EmployeeDetailsExtracted,
-		WorkExperience
+		EmployeeDetailsExtracted
 	} from '../../../utils/interfaces';
 	import { Home, Icon } from 'svelte-hero-icons';
 	import UploadResume from '../../../components/UploadResume.svelte';
+	import AddEmployeeDetails from '../../../components/AddEmployeeDetails.svelte';
+	import AddWorkExperience from '../../../components/AddWorkExperience.svelte';
 
 	// Local state for the form
 	let token: string;
@@ -34,8 +35,6 @@
 	let submitEnabled: boolean = false;
 	let onboardingLevelsStatus = onboardingLevels.map(() => false);
 	let activeLevel = 0;
-	let profileImgURL: string | null = null;
-	let fileInput: HTMLInputElement | null = null;
 
 	onMount(async () => {
 		try {
@@ -83,6 +82,13 @@
 	const updateEmployeeDetails = (updatedEmployeeDetails: EmployeeDetails) => {
 		employeeDetails = updatedEmployeeDetails;
 		updateProgress(employeeDetails);
+	};
+
+	const updateEmployeeDetail = (key: string, value: any) => {
+		employeeDetails = {
+			...employeeDetails,
+			[key]: value
+		};
 	};
 
 	// Resume submission and parsing
@@ -241,57 +247,6 @@
 		}
 	};
 
-	const addNewExperience = () => {
-		let newExperience: WorkExperience = {
-			company: '',
-			position: '',
-			startDate: '',
-			endDate: '',
-			experienceDocument: null
-		};
-		employeeDetails = {
-			...employeeDetails,
-			workExperiences: [...employeeDetails.workExperiences, newExperience]
-		};
-	};
-
-	const updateExperience = (index: number, field: keyof WorkExperience, value: any) => {
-		employeeDetails = {
-			...employeeDetails,
-			workExperiences: employeeDetails.workExperiences.map((experience, i) => {
-				if (i === index) {
-					return {
-						...experience,
-						[field]: value
-					};
-				}
-				return experience;
-			})
-		};
-	};
-
-	const deleteExperience = (index: number) => {
-		employeeDetails = {
-			...employeeDetails,
-			workExperiences: employeeDetails.workExperiences.filter((_, i) => i !== index)
-		};
-	};
-
-	const updateExperienceDocument = (event: Event) => {
-		const target = event.target as HTMLInputElement;
-		const file = target.files?.[0];
-
-		if (file) {
-			employeeDetails.profileImg = file;
-			updateProgress(employeeDetails);
-			const reader = new FileReader();
-			reader.onload = () => {
-				profileImgURL = reader.result as string; // Store the data URL
-			};
-			reader.readAsDataURL(file); // Convert file to data URL
-		}
-	};
-
 	$: updateProgress(employeeDetails);
 </script>
 
@@ -331,225 +286,10 @@
 					})} resumeDocument={employeeDetails.resumeDocument} />
 			{/if}
 			{#if activeLevel == 1}
-				<div class="flex flex-col justify-start gap-4">
-					<div>
-						<label for="employee-photo" class="block text-sm/6 font-medium text-gray-900"
-							>Employee Photo</label
-						>
-						<div id="employee-photo" class="mt-2 flex items-center gap-x-3">
-							{#if profileImgURL}
-								<img
-									class="h-12 w-12 rounded-full object-cover"
-									src={profileImgURL}
-									alt="employee dp"
-								/>
-							{:else}
-								<svg
-									class="size-12 text-gray-300"
-									viewBox="0 0 24 24"
-									fill="currentColor"
-									aria-hidden="true"
-									data-slot="icon"
-								>
-									<path
-										fill-rule="evenodd"
-										d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 0 0 3.065 7.097A9.716 9.716 0 0 0 12 21.75a9.716 9.716 0 0 0 6.685-2.653Zm-12.54-1.285A7.486 7.486 0 0 1 12 15a7.486 7.486 0 0 1 5.855 2.812A8.224 8.224 0 0 1 12 20.25a8.224 8.224 0 0 1-5.855-2.438ZM15.75 9a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
-										clip-rule="evenodd"
-									/>
-								</svg>
-							{/if}
-							<input
-								type="file"
-								accept="image/*"
-								bind:this={fileInput}
-								on:change={updateExperienceDocument}
-								style="display: none"
-							/>
-							<button
-								type="button"
-								class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-								on:click={() => fileInput?.click()}>Change</button
-							>
-						</div>
-					</div>
-					<div>
-						<label for="name" class="block text-sm/6 font-medium text-gray-900">Name</label>
-						<div class="mt-2">
-							<input
-								type="text"
-								name="name"
-								id="name"
-								autocomplete="given-name"
-								placeholder="Enter your name"
-								class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-								bind:value={employeeDetails.name}
-								on:change={() => updateProgress(employeeDetails)}
-							/>
-						</div>
-					</div>
-					<div>
-						<label for="email" class="block text-sm/6 font-medium text-gray-900"
-							>Email address</label
-						>
-						<div class="mt-2">
-							<input
-								id="email"
-								name="email"
-								type="email"
-								autocomplete="email"
-								placeholder="you@example.com"
-								class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-								bind:value={employeeDetails.email}
-								on:change={() => updateProgress(employeeDetails)}
-							/>
-						</div>
-					</div>
-
-					<div>
-						<label for="phone-number" class="block text-sm/6 font-medium text-gray-900"
-							>Phone Number</label
-						>
-						<div class="mt-2">
-							<input
-								id="phone-number"
-								name="email"
-								type="email"
-								autocomplete="email"
-								placeholder="you@example.com"
-								class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-								bind:value={employeeDetails.phone}
-								on:change={() => updateProgress(employeeDetails)}
-							/>
-						</div>
-					</div>
-				</div>
+				<AddEmployeeDetails updateEmployeeDetail={updateEmployeeDetail} name={employeeDetails.name} email={employeeDetails.email} phone={employeeDetails.phone} />
 			{/if}
 			{#if activeLevel == 2}
-				<ul role="list" class="divide-y">
-					{#each employeeDetails.workExperiences as experience, index}
-						<div
-							class="my-3 rounded-lg border-2 border-solid border-gray-400 bg-white p-4 shadow-md"
-						>
-							<button
-								class="border-grey-800 relative -right-7 -top-7 float-right rounded-full border bg-white p-1 text-red-500 hover:bg-red-500 hover:text-white"
-								on:click={() => deleteExperience(index)}
-								aria-label="Delete Experience"
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-4 w-4"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M6 18L18 6M6 6l12 12"
-									/>
-								</svg>
-							</button>
-							<div class="grid grid-cols-2 gap-4">
-								<div>
-									<input
-										type="text"
-										class="w-full rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-										value={experience.company}
-										on:input={(e: Event) =>
-											updateExperience(index, 'company', (e.target as HTMLInputElement).value)}
-										placeholder="Enter company name"
-									/>
-								</div>
-								<div>
-									<input
-										type="text"
-										class="w-full rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-										value={experience.position}
-										on:input={(e: Event) =>
-											updateExperience(index, 'position', (e.target as HTMLInputElement).value)}
-										placeholder="Enter position"
-									/>
-								</div>
-								<div class="grid grid-cols-2 gap-4">
-									<div>
-										<label for="start-date" class="block text-sm font-medium text-gray-700"
-											>Start Date</label
-										>
-										<input
-											id="start-date"
-											type="month"
-											class="w-full rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-											value={experience.startDate}
-											on:input={(e: Event) =>
-												updateExperience(index, 'startDate', (e.target as HTMLInputElement).value)}
-										/>
-									</div>
-									<div>
-										<label for="end-date" class="block text-sm font-medium text-gray-700"
-											>End Date</label
-										>
-										<input
-											id="end-date"
-											type="month"
-											class="w-full rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-											value={experience.endDate}
-											on:input={(e: Event) =>
-												updateExperience(index, 'endDate', (e.target as HTMLInputElement).value)}
-										/>
-									</div>
-								</div>
-								<div>
-									<label for="experience-document" class="block text-sm font-medium text-gray-700">
-										Experience Document
-									</label>
-									<div class="relative flex">
-										<input
-											id="experience-document"
-											type="file"
-											class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-											on:change={(e: Event) =>
-												updateExperience(
-													index,
-													'experienceDocument',
-													(e.target as HTMLInputElement).files?.[0] || null
-												)}
-										/>
-										<label
-											for="experience-document"
-											class="block w-fit cursor-pointer rounded border border-gray-400 bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
-										>
-											Choose File
-										</label>
-										<span class="my-auto ml-2 text-sm text-gray-600">
-											{experience.experienceDocument?.name ?? 'No file chosen'}
-										</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					{/each}
-				</ul>
-				<button
-					class="mx-auto flex items-center gap-2 rounded border border-gray-400 px-2 py-1"
-					on:click={addNewExperience}
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-5 w-5"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 4v16m8-8H4"
-						/>
-					</svg>
-					Add New Experience
-				</button>
+				<AddWorkExperience workExperiences = {employeeDetails.workExperiences} updateWorkExperiences={(updatedWorkExperiences) => updateEmployeeDetails({...employeeDetails, workExperiences: updatedWorkExperiences})} />
 			{/if}
 		</div>
 		<div class="flex h-[10%] items-end justify-end gap-x-6 border-t px-8">
