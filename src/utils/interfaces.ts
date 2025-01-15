@@ -17,24 +17,24 @@ export interface EmployeeDetails {
     education: Education[],
     achievements: string[],
     department: string,
-    position: string,
+    designation: string,
     dateJoined: string,
-    aadharDocument: File | null,
-    panDocument: File | null,
-    resumeDocument: File | null,
+    aadhaarCard: File | null,
+    panCard: File | null,
+    resume: File | null,
     profileImg: File | null
 }
 
 interface WorkExperienceExtracted {
-    company?: string,
-    position?: string,
+    companyName?: string,
+    designation?: string,
     startDate?: string,
     endDate?: string,
 }
 
 export interface WorkExperience {
-    company: string,
-    position: string,
+    companyName: string,
+    designation: string,
     startDate: string,
     endDate: string,
     experienceDocument: File | null

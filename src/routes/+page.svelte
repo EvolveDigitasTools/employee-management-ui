@@ -4,24 +4,7 @@
 	import { isTokenVerified } from '../utils/utils';
 
 	// Sample employee data (to be replaced with API data)
-	let employees: any[] = [
-		{
-			id: 1,
-			name: 'John Doe',
-			workEmailId: 'john.doe@example.com',
-			position: 'Software Engineer',
-			department: 'Development',
-			workingFor: 3
-		},
-		{
-			id: 2,
-			name: 'Jane Smith',
-			workEmailId: 'jane.smith@example.com',
-			position: 'HR Manager',
-			department: 'Human Resources',
-			workingFor: 5
-		}
-	];
+	let employees: any[] = [];
 	let filteredEmployees: any[] = [];
 	let searchQuery = '';
 
@@ -34,8 +17,15 @@
 				// If there's no token, redirect to login page
 				goto('/login');
 			}
-			// const res = await fetch('/api/employees'); // Replace with your backend endpoint
-			// employees = await res.json();
+			const res = await fetch(import.meta.env.VITE_API_URL + '/employee/all-employees', {
+				method: 'GET',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json'
+				}
+			}); // Replace with your backend endpoint
+			const data = await res.json();
+			employees = data.employees;
 			filteredEmployees = employees; // Initialize filtered list
 		} catch (error) {
 			console.error('Error fetching employees:', error);
@@ -79,14 +69,13 @@
 				<th class="border p-2">Position</th>
 				<th class="border p-2">Department</th>
 				<th class="border p-2">Working For</th>
-				<th class="border p-2">Actions</th>
 			</tr>
 		</thead>
 		<tbody>
 			{#each filteredEmployees as employee}
 				<tr class="hover:bg-gray-50">
 					<td class="border p-2">{employee.name}</td>
-					<td class="border p-2">{employee.workEmailId}</td>
+					<td class="border p-2">{employee.workMailId}</td>
 					<td class="border p-2">{employee.position}</td>
 					<td class="border p-2">{employee.department}</td>
 					<td class="border p-2">{employee.workingFor} years</td>

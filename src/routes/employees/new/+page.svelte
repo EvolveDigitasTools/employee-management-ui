@@ -2,7 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { isTokenVerified, onboardingLevels } from '../../../utils/utils';
-	import type { EmployeeDetails, EmployeeDetailsExtracted } from '../../../utils/interfaces';
+	import type {
+		EmployeeDetails,
+		EmployeeDetailsExtracted,
+		WorkExperience
+	} from '../../../utils/interfaces';
 	import { Home, Icon } from 'svelte-hero-icons';
 	import UploadResume from '../../../components/UploadResume.svelte';
 	import AddEmployeeDetails from '../../../components/AddEmployeeDetails.svelte';
@@ -23,15 +27,16 @@
 		education: [],
 		achievements: [],
 		department: '',
-		position: '',
+		designation: '',
 		dateJoined: '',
-		aadharDocument: null,
-		panDocument: null,
-		resumeDocument: null,
+		aadhaarCard: null,
+		panCard: null,
+		resume: null,
 		profileImg: null
 	};
 	let error = '';
 	let submitEnabled: boolean = false;
+	let submitLoading: boolean = false;
 	let onboardingLevelsStatus = onboardingLevels.map(() => false);
 	let activeLevel = 0;
 
@@ -50,7 +55,7 @@
 
 	const updateProgress = (employeeDetails: EmployeeDetails, activeLevel: number) => {
 		if (activeLevel == 0) {
-			submitEnabled = !!employeeDetails.resumeDocument;
+			submitEnabled = !!employeeDetails.resume;
 		} else if (activeLevel == 1) {
 			submitEnabled =
 				!!employeeDetails.name &&
@@ -64,8 +69,8 @@
 			submitEnabled = true;
 			employeeDetails.workExperiences.forEach((experience) => {
 				if (
-					!(experience.company && experience.company.length > 0) ||
-					!(experience.position && experience.position.length > 0) ||
+					!(experience.companyName && experience.companyName.length > 0) ||
+					!(experience.designation && experience.designation.length > 0) ||
 					!(experience.startDate && experience.startDate.length > 0) ||
 					!(experience.endDate && experience.endDate.length > 0) ||
 					!experience.experienceDocument
@@ -88,15 +93,15 @@
 			});
 		} else if (activeLevel == 4) submitEnabled = true;
 		else if (activeLevel == 5) {
-			if (employeeDetails.aadharDocument && employeeDetails.panDocument) {
+			if (employeeDetails.aadhaarCard && employeeDetails.panCard) {
 				submitEnabled = true;
 			} else submitEnabled = false;
 		} else if (activeLevel == 6) {
 			if (
 				employeeDetails.department &&
 				employeeDetails.department.length > 0 &&
-				employeeDetails.position &&
-				employeeDetails.position.length > 0 &&
+				employeeDetails.designation &&
+				employeeDetails.designation.length > 0 &&
 				employeeDetails.dateJoined
 			) {
 				submitEnabled = true;
@@ -121,14 +126,15 @@
 
 	// Resume submission and parsing
 	const submitResume: () => Promise<boolean> = async () => {
-		if (!employeeDetails.resumeDocument) {
+		if (!employeeDetails.resume) {
 			error = 'Please upload a resume.';
 			return false;
 		}
+		submitLoading = true;
 
 		error = '';
 		const formData = new FormData();
-		formData.append('file', employeeDetails.resumeDocument);
+		formData.append('file', employeeDetails.resume);
 
 		try {
 			const res = await fetch(import.meta.env.VITE_API_URL + '/parsing/get-resume-details', {
@@ -148,8 +154,8 @@
 				workExperiences:
 					data.workExperiences?.map((experience) => {
 						return {
-							company: experience.company ?? '',
-							position: experience.position ?? '',
+							companyName: experience.companyName ?? '',
+							designation: experience.designation ?? '',
 							startDate: experience.startDate ?? '',
 							endDate: experience.endDate ?? '',
 							experienceDocument: null
@@ -167,10 +173,12 @@
 						};
 					}) || []
 			};
+			submitLoading = false;
 			return true;
 		} catch (err) {
 			error = 'Failed to parse the resume. Please fill the details manually.';
 			console.error(err);
+			submitLoading = false;
 			return false;
 		}
 	};
@@ -196,7 +204,7 @@
 
 			if (result) {
 				onboardingLevelsStatus[activeLevel] = true;
-				if(activeLevel == 6) {
+				if (activeLevel == 6) {
 					submitForm();
 					return;
 				}
@@ -208,22 +216,74 @@
 		}
 	};
 
+	const transformWorkExperienceDates = (workExperience: WorkExperience) => {
+		const [startYear, startMonth] = workExperience.startDate.split('-');
+		const [endYear, endMonth] = workExperience.endDate.split('-');
+
+		return {
+			companyName: workExperience.companyName,
+			designation: workExperience.designation,
+			experienceDocument: workExperience.experienceDocument,
+			startYear,
+			startMonth,
+			endYear,
+			endMonth
+		};
+	};
+
 	// Submit the complete form
 	const submitForm = async () => {
 		try {
+			submitLoading = true;
+			const employeeDetailsFormData = new FormData();
+			Object.entries(employeeDetails).forEach(([key, value]) => {
+				if (Array.isArray(value)) {
+					// Handle arrays (skills, achievements, workExperiences, education)
+					if (key === 'workExperiences') {
+						value.forEach((work, index) => {
+							const transformedWork = transformWorkExperienceDates(work);
+							Object.entries(transformedWork).forEach(([workKey, workValue]) => {
+								employeeDetailsFormData.append(
+									`workExperiences[${index}].${workKey}`,
+									workValue as string | Blob
+								);
+							});
+						});
+					} else if (key === 'education') {
+						value.forEach((edu, index) => {
+							Object.entries(edu).forEach(([eduKey, eduValue]) => {
+								employeeDetailsFormData.append(
+									`education[${index}].${eduKey}`,
+									eduValue as string | Blob
+								);
+							});
+						});
+					} else {
+						value.forEach((item) => employeeDetailsFormData.append(`${key}[]`, item));
+					}
+				} else {
+					// Handle simple fields
+					employeeDetailsFormData.append(key, value);
+				}
+			});
 			const res = await fetch(import.meta.env.VITE_API_URL + '/employee/new', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(employeeDetails)
+				headers: {
+					Authorization: `Bearer ${token}`
+				},
+				body: employeeDetailsFormData
 			});
 			if (res.ok) {
-				goto('/employees'); // Redirect to the homepage on success
+				submitLoading = false
+				goto('/'); // Redirect to the homepage on success
 			} else {
 				error = 'Failed to submit the details. Please try again.';
+				submitLoading = false;
 			}
 		} catch (err) {
-			error = 'An error occurred while submitting the form.';
+			error = 'An error occurred while submitting the form, please try again after some time or contact admin';
 			console.error(err);
+			submitLoading = false;
 		}
 	};
 
@@ -263,9 +323,9 @@
 					uploadResume={(file: File) =>
 						updateEmployeeDetails({
 							...employeeDetails,
-							resumeDocument: file
+							resume: file
 						})}
-					resumeDocument={employeeDetails.resumeDocument}
+					resumeDocument={employeeDetails.resume}
 				/>
 			{/if}
 			{#if activeLevel == 1}
@@ -302,8 +362,8 @@
 			{#if activeLevel == 5}
 				<IdentityDocuments
 					documents={{
-						aadharDocument: employeeDetails.aadharDocument,
-						panDocument: employeeDetails.panDocument
+						aadharDocument: employeeDetails.aadhaarCard,
+						panDocument: employeeDetails.panCard
 					}}
 					updateDocument={updateEmployeeDetail}
 				/>
@@ -311,7 +371,7 @@
 			{#if activeLevel == 6}
 				<JoiningDetails
 					department={employeeDetails.department}
-					position={employeeDetails.position}
+					designation={employeeDetails.designation}
 					dateJoined={employeeDetails.dateJoined}
 					updateField={updateEmployeeDetail}
 				/>
@@ -320,10 +380,30 @@
 		<div class="flex h-[10%] items-end justify-end gap-x-6 border-t px-8">
 			<button
 				type="submit"
-				disabled={submitEnabled ? false : true}
-				class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-500"
-				on:click={submitSteps}>Submit{submitEnabled ? '' : ' (enter all details)'}</button
+				disabled={!submitEnabled || submitLoading}
+				class="flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-500"
+				on:click={submitSteps}
 			>
+				{#if submitLoading	}
+					<svg
+						class="mr-2 h-4 w-4 animate-spin text-white"
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+					>
+						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+						></circle>
+						<path
+							class="opacity-75"
+							fill="currentColor"
+							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.963 7.963 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+						></path>
+					</svg>
+					Please wait...
+				{:else}
+					Submit{submitEnabled ? '' : ' (enter all details)'}
+				{/if}
+			</button>
 		</div>
 	</div>
 </div>

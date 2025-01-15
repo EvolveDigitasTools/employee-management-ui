@@ -2,10 +2,10 @@
     export let documents = {
       aadharDocument: null as File | null,
       panDocument: null as File | null,
-    }, updateDocument: (field: "aadharDocument" | "panDocument", value: File | null) => void;
+    }, updateDocument: (field: "aadhaarCard" | "panCard", value: File | null) => void;
     let error = "";
   
-    const handleFileUpload = (e: Event, type: "aadharDocument" | "panDocument") => {
+    const handleFileUpload = (e: Event, type: "aadhaarCard" | "panCard") => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         if (!["application/pdf", "image/jpeg", "image/png"].includes(file.type)) {
@@ -21,7 +21,7 @@
       }
     };
   
-    const removeFile = (type: "aadharDocument" | "panDocument") => {
+    const removeFile = (type: "aadhaarCard" | "panCard") => {
       updateDocument(type, null);
       error = "";
     };
@@ -57,7 +57,7 @@
           </div>
           <button
             class="rounded-md bg-red-500 px-3 py-1 text-xs font-medium text-white shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
-            on:click={() => removeFile("aadharDocument")}
+            on:click={() => removeFile("aadhaarCard")}
           >
             Remove
           </button>
@@ -67,7 +67,7 @@
             accept=".pdf,.jpg,.jpeg,.png"
             id="aadhar-upload"
             class="hidden"
-            on:change={(e) => handleFileUpload(e, "aadharDocument")}
+            on:change={(e) => handleFileUpload(e, "aadhaarCard")}
           />
           <label
             for="aadhar-upload"
@@ -108,7 +108,7 @@
           </div>
           <button
             class="rounded-md bg-red-500 px-3 py-1 text-xs font-medium text-white shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
-            on:click={() => removeFile("panDocument")}
+            on:click={() => removeFile("panCard")}
           >
             Remove
           </button>
@@ -118,7 +118,7 @@
             accept=".pdf,.jpg,.jpeg,.png"
             id="pan-upload"
             class="hidden"
-            on:change={(e) => handleFileUpload(e, "panDocument")}
+            on:change={(e) => handleFileUpload(e, "panCard")}
           />
           <label
             for="pan-upload"

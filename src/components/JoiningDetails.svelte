@@ -1,5 +1,5 @@
 <script lang="ts">
-    export let department: string = "", position: string = "", dateJoined: string = "", updateField: (field: string, value: string) => void;
+    export let department: string = "", designation: string = "", dateJoined: string = "", updateField: (field: string, value: string) => void;
   
     const handleDateChange = (e: Event) => {
       updateField('dateJoined', (e.target as HTMLInputElement).value);
@@ -24,16 +24,16 @@
   
     <!-- Position -->
     <div class="space-y-2">
-      <label for="position" class="block text-sm font-medium text-gray-700">
-        Position
+      <label for="designation" class="block text-sm font-medium text-gray-700">
+        Designation
       </label>
       <input
         type="text"
-        id="position"
+        id="designation"
         class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        placeholder="Enter position"
-        value={position}
-        on:change={(e: Event) => updateField("position", (e.target as HTMLInputElement).value)}
+        placeholder="Enter designation you're joining in"
+        value={designation}
+        on:change={(e: Event) => updateField("designation", (e.target as HTMLInputElement).value)}
       />
     </div>
   

@@ -24,8 +24,8 @@
 
 	const addNewExperience = () => {
 		let newExperience: WorkExperience = {
-			company: '',
-			position: '',
+			companyName: '',
+			designation: '',
 			startDate: '',
 			endDate: '',
 			experienceDocument: null
@@ -62,9 +62,9 @@
 					<input
 						type="text"
 						class="w-full rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-						value={experience.company}
+						value={experience.companyName}
 						on:input={(e: Event) =>
-							updateExperience(index, 'company', (e.target as HTMLInputElement).value)}
+							updateExperience(index, 'companyName', (e.target as HTMLInputElement).value)}
 						placeholder="Enter company name"
 					/>
 				</div>
@@ -72,10 +72,10 @@
 					<input
 						type="text"
 						class="w-full rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-						value={experience.position}
+						value={experience.designation}
 						on:input={(e: Event) =>
-							updateExperience(index, 'position', (e.target as HTMLInputElement).value)}
-						placeholder="Enter position"
+							updateExperience(index, 'designation', (e.target as HTMLInputElement).value)}
+						placeholder="Enter designation"
 					/>
 				</div>
 				<div class="grid grid-cols-2 gap-4">
